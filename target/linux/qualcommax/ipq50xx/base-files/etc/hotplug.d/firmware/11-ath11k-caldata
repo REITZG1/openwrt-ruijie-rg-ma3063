@@ -22,6 +22,14 @@ case "$FIRMWARE" in
 		ath11k_patch_mac $(macaddr_add $(get_mac_label_dt) 3) 0
 		ath11k_set_macflag
 		;;
+	ruijie,rg-ma3063)
+		caldata_extract "0:art" 0x1000 0x20000
+		caldata_patch_data "0000" 0x45c 0xa
+		wlan_mac=$(mtd_get_mac_binary 0:art 12)
+		ath11k_patch_mac $wlan_mac 0
+		ath11k_set_macflag
+		ath11k_remove_regdomain
+		;;
 	linksys,mr5500|\
 	linksys,mx2000|\
 	linksys,mx5500|\
@@ -65,6 +73,13 @@ case "$FIRMWARE" in
 	glinet,gl-b3000)
 		caldata_extract "0:art" 0x26800 0x20000
 		ath11k_patch_mac $(macaddr_add $(get_mac_label_dt) 4) 0
+		ath11k_set_macflag
+		;;
+	ruijie,rg-ma3063)
+		caldata_extract "0:art" 0x26800 0x20000
+		wlan_mac=$(mtd_get_mac_binary 0:art 18)
+		ath11k_patch_mac $wlan_mac 0
+		ath11k_remove_regdomain
 		ath11k_set_macflag
 		;;
 	linksys,mx2000)

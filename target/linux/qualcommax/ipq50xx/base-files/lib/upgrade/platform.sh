@@ -3,7 +3,7 @@
 PART_NAME=firmware
 REQUIRE_IMAGE_METADATA=1
 
-RAMFS_COPY_BIN='dumpimage fw_printenv fw_setenv head seq'
+RAMFS_COPY_BIN='dumpimage fw_printenv fw_setenv head seq flash_erase'
 RAMFS_COPY_DATA='/etc/fw_env.config /var/lock/fw_printenv.lock'
 
 xiaomi_initramfs_prepare() {
@@ -180,7 +180,6 @@ platform_pre_upgrade() {
 platform_do_upgrade() {
 	case "$(board_name)" in
 	cmcc,pz-l8|\
-	elecom,wrc-x3000gs2|\
 	iodata,wn-dax3000gr)
 		local delay
 
@@ -193,6 +192,16 @@ platform_do_upgrade() {
 		remove_oem_ubi_volume bt_fw
 		remove_oem_ubi_volume ubi_rootfs
 		remove_oem_ubi_volume wifi_fw
+		nand_do_upgrade "$1"
+		;;
+	elecom,wrc-x3000gs2|\
+	ruijie,rg-ma3063)
+		local delay
+
+		delay=$(fw_printenv bootdelay)
+		[ -z "$delay" ] || [ "$delay" -eq "0" ] && \
+			fw_setenv bootdelay 3
+
 		nand_do_upgrade "$1"
 		;;
 	glinet,gl-b3000)
