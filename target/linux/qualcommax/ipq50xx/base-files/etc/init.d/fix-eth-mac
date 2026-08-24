@@ -1,0 +1,32 @@
+#!/bin/sh /etc/rc.common
+
+# Fix Ethernet MAC for RG-MA3063.
+# ART partition has no MAC at offset 0, so the DTS nvmem cell returns zeros.
+# The real MAC is in U-Boot env (appsblenv) as ethaddr/eth1addr.
+# Read it via fw_printenv and apply to dp1 (eth0) and dp2 (eth1).
+
+START=19
+USE_PROCD=0
+
+start() {
+	[ "$(board_name)" = "ruijie,rg-ma3063" ] || return 0
+
+	. /lib/functions/system.sh
+
+	local label_mac
+	label_mac=$(fw_printenv -n ethaddr 2>/dev/null)
+	[ -n "$label_mac" ] || return 0
+
+	# dp1 (eth0) - GE PHY to QCA8337 Port5
+	ip link set dev eth0 address "$label_mac" 2>/dev/null
+
+	# dp2 (eth1) - SGMII to QCA8337 Port6, MAC + 1
+	local eth1_mac
+	eth1_mac=$(macaddr_add "$label_mac" 1)
+	ip link set dev eth1 address "$eth1_mac" 2>/dev/null
+
+	# Update bridge MAC if br-lan exists
+	[ -d /sys/class/net/br-lan ] && ip link set dev br-lan address "$label_mac" 2>/dev/null
+
+	return 0
+}
