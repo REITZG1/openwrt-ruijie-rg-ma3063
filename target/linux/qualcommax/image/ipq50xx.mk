@@ -43,7 +43,8 @@ define Device/ruijie_rg-ma3063
 	PAGESIZE := 2048
 	IMAGE_SIZE := 51200k
 	NAND_SIZE := 128m
-	DEVICE_PACKAGES := ath11k-firmware-ipq5018-qcn6122 \
+	DEVICE_PACKAGES := kmod-ath11k-smallbuffers \
+		ath11k-firmware-ipq5018-qcn6122 \
 		ipq-wifi-ruijie_rg-ma3063
 endef
 TARGET_DEVICES += ruijie_rg-ma3063
