@@ -16,10 +16,11 @@
 
 	aliases {
 		serial0 = &blsp1_uart1;
-		led-boot = &led_system;
+		led-boot = &led_green;
 		led-failsafe = &led_red;
-		led-running = &led_system;
+		led-running = &led_green;
 		led-upgrade = &led_red;
+		label-mac-device = <&dp1>;
 	};
 
 	chosen {
@@ -50,21 +51,21 @@
 		pinctrl-0 = <&led_pins>;
 		pinctrl-names = "default";
 
-		led_yellow: led-yellow {
-			gpios = <&tlmm 38 GPIO_ACTIVE_LOW>;
-			color = <LED_COLOR_ID_YELLOW>;
-			function = LED_FUNCTION_POWER;
-		};
-
 		led_red: led-red {
-			gpios = <&tlmm 32 GPIO_ACTIVE_LOW>;
+			gpios = <&tlmm 38 GPIO_ACTIVE_LOW>;
 			color = <LED_COLOR_ID_RED>;
 			function = LED_FUNCTION_STATUS;
 		};
 
-		led_system: led-system {
+		led_blue: led-blue {
+			gpios = <&tlmm 32 GPIO_ACTIVE_LOW>;
+			color = <LED_COLOR_ID_BLUE>;
+			function = LED_FUNCTION_STATUS;
+		};
+
+		led_green: led-green {
 			gpios = <&tlmm 19 GPIO_ACTIVE_LOW>;
-			color = <LED_COLOR_ID_RED>;
+			color = <LED_COLOR_ID_GREEN>;
 			function = LED_FUNCTION_STATUS;
 		};
 	};
@@ -329,7 +330,7 @@
 };
 
 &q6v5_wcss {
-	status = "okay";
+	status = "disabled";
 };
 
 &wifi {
@@ -340,7 +341,7 @@
 
 	ieee80211-freq-limit = <2400000 2483000>;
 
-	status = "okay";
+	status = "disabled";
 };
 
 &wifi1 {
@@ -353,5 +354,5 @@
 
 	ieee80211-freq-limit = <5150000 5730000>;
 
-	status = "okay";
+	status = "disabled";
 };
