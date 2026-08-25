@@ -3,30 +3,58 @@
 # Fix Ethernet MAC for RG-MA3063.
 # ART partition has no MAC at offset 0, so the DTS nvmem cell returns zeros.
 # The real MAC is in U-Boot env (appsblenv) as ethaddr/eth1addr.
-# Read it via fw_printenv and apply to dp1 (eth0) and dp2 (eth1).
+# Read via fw_printenv or direct MTD scan, then apply to eth0/eth1/br-lan.
 
 START=19
-USE_PROCD=0
 
 start() {
-	[ "$(board_name)" = "ruijie,rg-ma3063" ] || return 0
-
+	# Defer to post-boot if br-lan doesn't exist yet
+	[ -d /sys/class/net/br-lan ] || {
+		(
+			sleep 5
+			. /etc/init.d/fix-eth-mac
+			start
+		) &
+		return 0
+	}
+	. /lib/functions.sh
 	. /lib/functions/system.sh
 
-	local label_mac
-	label_mac=$(fw_printenv -n ethaddr 2>/dev/null)
-	[ -n "$label_mac" ] || return 0
+	[ "$(board_name)" = "ruijie,rg-ma3063" ] || return 0
 
-	# dp1 (eth0) - GE PHY to QCA8337 Port5
+	local label_mac=""
+
+	# Method 1: fw_printenv (needs /etc/fw_env.config)
+	label_mac=$(fw_printenv -n ethaddr 2>/dev/null)
+
+	# Method 2: scan U-Boot env directly from appsblenv partition (mtd10)
+	# Search for ethaddr= pattern in the first 256KB without assuming header layout
+	if [ -z "$label_mac" ]; then
+		label_mac=$(dd if=/dev/mtd10 bs=65536 count=4 2>/dev/null | \
+			grep -boa 'ethaddr=[0-9a-fA-F:]\+' | head -1 | \
+			sed 's/^[0-9]*:ethaddr=//')
+	fi
+
+	# Method 3: use mtd_get_mac_ascii from caldata.sh
+	if [ -z "$label_mac" ]; then
+		. /lib/functions/caldata.sh 2>/dev/null
+		label_mac=$(mtd_get_mac_ascii "0:appsblenv" ethaddr 2>/dev/null)
+	fi
+
+	[ -n "$label_mac" ] || {
+		echo "fix-eth-mac: no valid MAC found" >&2
+		return 1
+	}
+
+	echo "fix-eth-mac: setting MAC to $label_mac"
+
 	ip link set dev eth0 address "$label_mac" 2>/dev/null
 
-	# dp2 (eth1) - SGMII to QCA8337 Port6, MAC + 1
 	local eth1_mac
 	eth1_mac=$(macaddr_add "$label_mac" 1)
 	ip link set dev eth1 address "$eth1_mac" 2>/dev/null
 
-	# Update bridge MAC if br-lan exists
-	[ -d /sys/class/net/br-lan ] && ip link set dev br-lan address "$label_mac" 2>/dev/null
+	[ -d /sys/class/net/br-lan ] && ip link set dev br-lan address "$eth1_mac" 2>/dev/null
 
 	return 0
 }

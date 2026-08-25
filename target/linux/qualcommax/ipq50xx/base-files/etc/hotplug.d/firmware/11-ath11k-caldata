@@ -25,7 +25,7 @@ case "$FIRMWARE" in
 	ruijie,rg-ma3063)
 		caldata_extract "0:art" 0x1000 0x20000
 		caldata_patch_data "0000" 0x45c 0xa
-		wlan_mac=$(mtd_get_mac_binary 0:art 12)
+		wlan_mac=$(mtd_get_mac_ascii 0:appsblenv ethaddr)
 		ath11k_patch_mac $wlan_mac 0
 		ath11k_set_macflag
 		ath11k_remove_regdomain
@@ -77,7 +77,7 @@ case "$FIRMWARE" in
 		;;
 	ruijie,rg-ma3063)
 		caldata_extract "0:art" 0x26800 0x20000
-		wlan_mac=$(mtd_get_mac_binary 0:art 18)
+		wlan_mac=$(mtd_get_mac_ascii 0:appsblenv eth1addr)
 		ath11k_patch_mac $wlan_mac 0
 		ath11k_remove_regdomain
 		ath11k_set_macflag
