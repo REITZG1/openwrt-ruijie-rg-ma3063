@@ -1,3 +1,54 @@
+# OpenWrt for Ruijie RG-MA3063
+
+This tree adds support for the **Ruijie RG-MA3063** (China Mobile custom unit):
+IPQ5018 + QCN6122 WiFi 6, 256MB RAM, 128MB SPI-NAND, external QCA8337 switch
+(3x LAN + 1x WAN). Base: OpenWrt 25.12.5, kernel 6.12.94, `qualcommax/ipq50xx`.
+
+> Prebuilt images: [Releases](https://github.com/REITZG1/openwrt-ruijie-rg-ma3063/releases)
+> (`factory.ubi` = flash via U-Boot serial, `sysupgrade.bin` = upgrade from
+> running OpenWrt, `initramfs-uImage.itb` = TFTP test boot without flashing).
+
+## Hardware status
+
+| Part | Status |
+|---|---|
+| Ethernet (QCA8337, all 4 ports) | Working, warm + cold boot tested |
+| WiFi 2.4G / 5G (ath11k, AX) | Working; use HE20 / HE80 (HE160 triggers DFS wait) |
+| LuCI web UI | Working (AX/AC modes selectable) |
+| NAND tested | Macronix SPI NAND 128MiB (MX35UF1GE4AC) |
+| NAND NOT tested | Units with Fudan Micro chip — do not flash |
+
+## Flashing (serial/TTL required, 115200 baud)
+
+1. **Back up first** over serial: `ART` + `rootfs` + `rootfs_1` partitions.
+   Wrong flash = brick; lost ART = WiFi broken forever.
+2. TFTP-boot `initramfs-uImage.itb` to test without touching flash.
+3. Flash `factory.ubi` to **both** `rootfs` and `rootfs_1` slots
+   (U-Boot picks either slot; flashing one slot can roll back to stock).
+4. First boot IP is `192.168.1.1`, root password empty — run `passwd` immediately.
+
+## Building
+
+```bash
+./scripts/feeds update -a && ./scripts/feeds install -a
+cp <this-repo>/.config .config   # or: make menuconfig, target qualcommax/ipq50xx, device ruijie_rg-ma3063
+make -j$(nproc)
+```
+
+Build on a native Linux filesystem (ext4). NTFS/Windows checkouts break ~1000+
+symlinks (`staging_dir`, toolchain) and must not be used for building.
+Device files: `target/linux/qualcommax/files/arch/arm64/boot/dts/qcom/ipq5018-rg-ma3063.dts`,
+`target/linux/qualcommax/image/ipq50xx.mk`. The DTS must keep the QCA8337 reset
+on **GPIO 26** with MDIO reset delays, matching the stock DTB.
+
+## Known quirks
+
+- `HE160` on 5G channel 36 pulls in DFS channels (60s CAC wait) — use `HE80`.
+- 256MB RAM is tight for ath11k; avoid heavy packages.
+- Dual-boot U-Boot: keep both slots on OpenWrt or both on stock, never mixed.
+
+---
+
 ![OpenWrt logo](include/logo.png)
 
 OpenWrt Project is a Linux operating system targeting embedded devices. Instead
