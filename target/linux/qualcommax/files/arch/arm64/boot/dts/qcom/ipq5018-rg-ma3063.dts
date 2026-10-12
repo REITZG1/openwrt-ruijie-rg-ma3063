@@ -194,7 +194,9 @@
 
 	pinctrl-0 = <&mdio1_pins>;
 	pinctrl-names = "default";
-	reset-gpios = <&tlmm 39 GPIO_ACTIVE_LOW>;
+	reset-gpios = <&tlmm 26 GPIO_ACTIVE_LOW>;
+	reset-delay-us = <10000>;
+	reset-post-delay-us = <150000>;
 
 	qca8337_0: ethernet-phy@0 {
 		reg = <0>;
@@ -330,7 +332,7 @@
 };
 
 &q6v5_wcss {
-	status = "disabled";
+	status = "okay";
 };
 
 &wifi {
@@ -341,7 +343,7 @@
 
 	ieee80211-freq-limit = <2400000 2483000>;
 
-	status = "disabled";
+	status = "okay";
 };
 
 &wifi1 {
@@ -354,5 +356,5 @@
 
 	ieee80211-freq-limit = <5150000 5730000>;
 
-	status = "disabled";
+	status = "okay";
 };
