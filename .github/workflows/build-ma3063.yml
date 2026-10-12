@@ -45,6 +45,7 @@ jobs:
           CONFIG_TARGET_qualcommax=y
           CONFIG_TARGET_qualcommax_ipq50xx=y
           CONFIG_TARGET_qualcommax_ipq50xx_DEVICE_ruijie_rg-ma3063=y
+          CONFIG_PACKAGE_luci=y
           EOF
           make defconfig
 
