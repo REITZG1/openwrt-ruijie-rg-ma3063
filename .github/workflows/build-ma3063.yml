@@ -5,8 +5,10 @@ on:
   push:
     branches:
       - fix-ma3063-ethernet-luci
+      - ma3063-custom
     paths:
       - 'target/linux/qualcommax/**'
+      - 'package/base-files/files/etc/banner'
       - '.github/workflows/build-ma3063.yml'
 
 env:
@@ -46,6 +48,17 @@ jobs:
           CONFIG_TARGET_qualcommax_ipq50xx=y
           CONFIG_TARGET_qualcommax_ipq50xx_DEVICE_ruijie_rg-ma3063=y
           CONFIG_PACKAGE_luci=y
+          # Branding: maintainer + GitHub (shows in LuCI Status, /etc/device_info, banner)
+          CONFIG_VERSIONOPT=y
+          CONFIG_VERSION_DIST="REITZG1"
+          CONFIG_VERSION_MANUFACTURER="REITZG1"
+          CONFIG_VERSION_MANUFACTURER_URL="https://github.com/REITZG1/openwrt-ruijie-rg-ma3063"
+          CONFIG_VERSION_HOME_URL="https://github.com/REITZG1/openwrt-ruijie-rg-ma3063"
+          CONFIG_VERSION_SUPPORT_URL="https://github.com/REITZG1/openwrt-ruijie-rg-ma3063/issues"
+          CONFIG_VERSION_BUG_URL="https://github.com/REITZG1/openwrt-ruijie-rg-ma3063/issues"
+          CONFIG_VERSION_PRODUCT="RG-MA3063"
+          # Do NOT include temperature status app (replaced by Maintainer box)
+          # CONFIG_PACKAGE_luci-app-temp-status is not set
           EOF
           make defconfig
 

@@ -1,0 +1,22 @@
+#!/bin/sh
+# 99-ma3063-wifi: enable WiFi by default on Ruijie RG-MA3063.
+# Keeps the default OpenWrt SSID (e.g. "OpenWrt"), only removes disabled=1.
+# Runs once via uci-defaults on first boot.
+
+. /lib/functions/system.sh
+
+board=$(board_name)
+[ "$board" = "ruijie,rg-ma3063" ] || exit 0
+[ -f /etc/config/wireless ] || exit 0
+
+# Enable every wifi-device and wifi-iface, keep existing SSID/encryption.
+for s in $(uci -q show wireless | sed -n "s/^wireless\.\([^.]*\)\.disabled='1'$/\1/p"); do
+	uci set wireless."$s".disabled='0'
+done
+
+uci commit wireless
+
+# Try to bring wifi up immediately (harmless if it fails on first boot).
+wifi up >/dev/null 2>&1 || wifi reload >/dev/null 2>&1 || true
+
+exit 0
