@@ -24,3 +24,5 @@ for F in $(find /usr/share/ucode/luci/template /www -name 'footer.ut' 2>/dev/nul
 done
 
 exit 0
+
+# r2 rebuild trigger
