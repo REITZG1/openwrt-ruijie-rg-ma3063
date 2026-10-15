@@ -1,0 +1,26 @@
+#!/bin/sh
+# RG-MA3063 first-boot defaults: WiFi on, maintainer watermark.
+# Runs on all qualcommax boards but only acts on ruijie,rg-ma3063.
+[ "$(board_name)" = "ruijie,rg-ma3063" ] || exit 0
+
+# 1. WiFi enabled by default (fresh installs ship with radios disabled).
+wifi config 2>/dev/null
+uci -q delete wireless.radio0.disabled
+uci -q delete wireless.radio1.disabled
+uci -q delete wireless.default_radio0.disabled
+uci -q delete wireless.default_radio1.disabled
+uci commit wireless
+
+# 2. SSH login banner watermark (shown by dropbear on every login).
+grep -q "github.com/REITZG1" /etc/banner 2>/dev/null || cat >> /etc/banner <<'EOF'
+
+RG-MA3063 build maintained by REITZG1 <https://github.com/REITZG1>
+EOF
+
+# 3. LuCI footer watermark (bootstrap theme, subtle text link).
+for F in $(find /usr/share/ucode/luci/template /www -name 'footer.ut' 2>/dev/null); do
+	grep -q "github.com/REITZG1" "$F" 2>/dev/null || \
+	sed -i 's|</span>| / Maintained by <a href="https://github.com/REITZG1" target="_blank" rel="noreferrer">REITZG1</a></span>|' "$F"
+done
+
+exit 0
