@@ -9,6 +9,7 @@ on:
     paths:
       - 'target/linux/qualcommax/**'
       - 'package/base-files/files/etc/banner'
+      - 'package/kernel/mac80211/**'
       - '.github/workflows/build-ma3063.yml'
 
 env:
@@ -66,13 +67,27 @@ jobs:
         run: make download -j$(nproc)
 
       - name: Build firmware
-        run: make -j$(nproc)
+        run: |
+          make -j$(nproc) 2>&1 | tee build.log || (echo "=== PARALLEL BUILD FAILED, RETRY VERBOSE ===" && make -j1 V=s 2>&1 | tee build-verbose.log; exit 1)
 
       - name: Collect artifacts
         run: |
           mkdir -p artifacts
           cp bin/targets/qualcommax/ipq50xx/*ma3063* artifacts/ 2>/dev/null || true
-          ls -lh artifacts/
+          ls -lh artifacts/ || true
+          cp .config artifacts/defconfig-ma3063 2>/dev/null || true
+
+      - name: Upload build logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: openwrt-ma3063-buildlogs
+          path: |
+            build.log
+            build-verbose.log
+            .config
+            tmp/.config-package.in
+            logs/
 
       - name: Upload firmware
         uses: actions/upload-artifact@v4
