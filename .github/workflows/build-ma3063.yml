@@ -53,7 +53,7 @@ jobs:
         run: make download -j$(nproc)
 
       - name: Build firmware
-        run: make -j$(nproc)
+        run: make -j$(nproc) || make -j1 V=s
 
       - name: Collect artifacts
         run: |
