@@ -30,7 +30,7 @@ jobs:
             swig unzip zlib1g-dev file wget python3-pyelftools
 
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
@@ -54,15 +54,17 @@ jobs:
 
       - name: Build firmware
         run: |
-          make clean 2>/dev/null || true
-          make dirclean 2>/dev/null || true
-          make -j1 V=s world image 2>&1 | tail -n 50 || echo "BUILD FAILED - check logs above"
+          set -o pipefail
+          # NOTE: jangan make clean/dirclean di sini — itu menghapus .config
+          # hasil defconfig + hasil feeds install di atas.
+          make -j$(nproc) 2>&1 | tee build.log | tail -n 100 || make -j1 V=s 2>&1 | tee build-verbose.log | tail -n 200
 
       - name: Collect artifacts
         run: |
           mkdir -p artifacts
           cp bin/targets/qualcommax/ipq50xx/*ma3063* artifacts/ 2>/dev/null || true
-          ls -lh artifacts/
+          ls -lh artifacts/ bin/targets/qualcommax/ipq50xx/ || true
+          test -n "$(ls -A artifacts 2>/dev/null)" || { echo "ERROR: no ma3063 artifacts built"; exit 1; }
 
       - name: Upload firmware
         uses: actions/upload-artifact@v4
