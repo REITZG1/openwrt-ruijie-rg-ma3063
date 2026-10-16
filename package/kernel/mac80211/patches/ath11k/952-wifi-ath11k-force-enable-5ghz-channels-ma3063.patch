@@ -1,17 +1,17 @@
 --- a/drivers/net/wireless/ath/ath11k/reg.c
 +++ b/drivers/net/wireless/ath/ath11k/reg.c
-@@ -44,6 +44,44 @@
+@@ -44,6 +44,48 @@
  	return memcmp(regd->alpha2, alpha2, 2) != 0;
  }
  
 +/* Ruijie RG-MA3063: FW WLAN.HK.2.7.0.1 reports a restricted 5 GHz
 + * channel list (only 149-161 usable, BDF regDmn is ignored by the
-+ * firmware). Force-enable the full 5 GHz band so channels
-+ * 36-48/52-64/100-144/149-165 show up in iw/LuCI and can be used.
-+ * Must run after every cfg80211 reg update because the core re-marks
-+ * channels from the narrow FW rules asynchronously (reg_work), and in
-+ * the reg notifier before the state check (the 5G AP can never start
-+ * otherwise, so state would never become ON).
++ * firmware). Force-enable the full 5 GHz band (20/40/80/160 MHz) so
++ * channels 36-48/52-64/100-144/149-165 show up in iw/LuCI and can be
++ * used. Must run after every cfg80211 reg update because the core
++ * re-marks channels from the narrow FW rules asynchronously
++ * (reg_work), and in the reg notifier before the state check (the 5G
++ * AP can never start otherwise, so state would never become ON).
 + */
 +static void ath11k_ma3063_force_5g_chans(struct ath11k *ar)
 +{
@@ -29,7 +29,11 @@
 +			continue;
 +
 +		ch->flags &= ~(IEEE80211_CHAN_DISABLED |
-+			       IEEE80211_CHAN_NO_IR);
++			       IEEE80211_CHAN_NO_IR |
++			       IEEE80211_CHAN_NO_HT40MINUS |
++			       IEEE80211_CHAN_NO_HT40PLUS |
++			       IEEE80211_CHAN_NO_80MHZ |
++			       IEEE80211_CHAN_NO_160MHZ);
 +		if ((ch->center_freq >= 5260 && ch->center_freq <= 5320) ||
 +		    (ch->center_freq >= 5500 && ch->center_freq <= 5720))
 +			ch->flags |= IEEE80211_CHAN_RADAR;
@@ -45,7 +49,7 @@
  static void
  ath11k_reg_notifier(struct wiphy *wiphy, struct regulatory_request *request)
  {
-@@ -58,6 +96,7 @@
+@@ -58,6 +100,7 @@
  	if (request->initiator == NL80211_REGDOM_SET_BY_DRIVER) {
  		ath11k_dbg(ar->ab, ATH11K_DBG_REG,
  			   "driver initiated regd update\n");
@@ -53,7 +57,19 @@
  		if (ar->state != ATH11K_STATE_ON)
  			return;
  
-@@ -291,6 +330,8 @@
+@@ -284,6 +327,11 @@
+ 		goto err;
+ 	}
+ 
++	/* without a DFS region CAC/radar detection can never start;
++	 * default to ETSI when the firmware reports none */
++	if (regd_copy->dfs_region == NL80211_DFS_UNSET)
++		regd_copy->dfs_region = NL80211_DFS_ETSI;
++
+ 	ret = regulatory_set_wiphy_regd(ar->hw->wiphy, regd_copy);
+ 
+ 	kfree(regd_copy);
+@@ -291,6 +339,8 @@
  	if (ret)
  		goto err;
  
