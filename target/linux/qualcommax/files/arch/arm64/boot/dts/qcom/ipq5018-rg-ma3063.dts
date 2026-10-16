@@ -246,17 +246,9 @@
 				phy-handle = <&qca8337_2>;
 			};
 
-			port@4 {
-				reg = <4>;
-				label = "wan";
-				phy-handle = <&qca8337_3>;
-			};
-
-			/* TEST: candidate real WAN jack (switch port 5).
-			 * Remove after mapping is confirmed. */
 			port@5 {
 				reg = <5>;
-				label = "wanb";
+				label = "wan";
 				phy-handle = <&qca8337_4>;
 			};
 

@@ -1,0 +1,41 @@
+--- a/drivers/net/wireless/ath/ath11k/reg.c
++++ b/drivers/net/wireless/ath/ath11k/reg.c
+@@ -288,6 +288,38 @@ int ath11k_regd_update(struct ath11k *ar)
+ 	if (ret)
+ 		goto err;
+
++	/* Ruijie RG-MA3063: FW WLAN.HK.2.7.0.1 reports a restricted 5 GHz
++	 * channel list (only 149-161 usable, BDF regDmn is ignored by the
++	 * firmware). Force-enable the full 5 GHz band so channels
++	 * 36-48/52-64/100-144/149-165 show up in iw/LuCI and can be used.
++	 */
++	{
++		struct ieee80211_supported_band *sband =
++			ar->hw->wiphy->bands[NL80211_BAND_5GHZ];
++		int i;
++
++		if (sband) {
++			for (i = 0; i < sband->n_channels; i++) {
++				struct ieee80211_channel *ch = &sband->channels[i];
++
++				if (ch->center_freq < 5150 || ch->center_freq > 5850)
++					continue;
++
++				ch->flags &= ~(IEEE80211_CHAN_DISABLED |
++					       IEEE80211_CHAN_NO_IR);
++				if ((ch->center_freq >= 5260 && ch->center_freq <= 5320) ||
++				    (ch->center_freq >= 5500 && ch->center_freq <= 5720))
++					ch->flags |= IEEE80211_CHAN_RADAR;
++				else
++					ch->flags &= ~IEEE80211_CHAN_RADAR;
++				if (ch->max_power < 10)
++					ch->max_power = 20;
++				if (ch->max_reg_power < 10)
++					ch->max_reg_power = 20;
++			}
++		}
++	}
++
+ 	return 0;
+ err:
+ 	ath11k_warn(ab, "failed to perform regd update : %d\n", ret);
