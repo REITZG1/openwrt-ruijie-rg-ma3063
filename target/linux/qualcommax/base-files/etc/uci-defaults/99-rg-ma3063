@@ -14,7 +14,7 @@ for R in radio0 radio1; do
 	case "$(uci -q get wireless.$R.band)" in
 		2g)	uci set wireless.$R.channel='6'
 			uci set wireless.$R.htmode='HE20' ;;
-		5g)	uci set wireless.$R.channel='36'
+		5g)	uci set wireless.$R.channel='149'
 			uci set wireless.$R.htmode='HE80' ;;
 	esac
 	uci -q delete wireless.$R.disabled
