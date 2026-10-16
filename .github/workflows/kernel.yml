@@ -9,16 +9,8 @@ on:
       - 'include/kernel*'
       - 'package/kernel/**'
       - 'target/linux/**'
-  push:
-    paths:
-      - '.github/workflows/check-kernel-patches.yml'
-      - '.github/workflows/build.yml'
-      - '.github/workflows/kernel.yml'
-      - 'include/kernel*'
-      - 'package/kernel/**'
-      - 'target/linux/**'
-    branches-ignore:
-      - master
+  # NOTE (fork): push trigger disabled on device branches to save Actions
+  # minutes. Kernel is already built by build-ma3063.yml per push.
 
 permissions:
   contents: read

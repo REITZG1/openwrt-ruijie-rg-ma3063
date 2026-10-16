@@ -12,8 +12,17 @@ on:
 env:
   TZ: Asia/Jakarta
 
+# A new push cancels the outdated running build instead of stacking
+# 1h+ builds and burning Actions minutes.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
+    # Allow skipping CI with "[skip ci]" in the commit message for
+    # docs-only or batch-fix commits.
+    if: "!contains(github.event.head_commit.message, '[skip ci]')"
     runs-on: ubuntu-24.04
     steps:
       - name: Free disk space
