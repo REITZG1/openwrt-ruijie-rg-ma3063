@@ -19,6 +19,7 @@ on:
       - 'toolchain/**'
     branches-ignore:
       - master
+      - fix-ma3063-ethernet-luci
 
 permissions:
   contents: read

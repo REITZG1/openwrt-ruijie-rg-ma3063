@@ -1,13 +1,10 @@
 name: Build RG-MA3063
 
 on:
+  # Manual only: images are built locally on PC and uploaded to
+  # releases with 'gh release'. Push builds are disabled to stop
+  # the endless build-failure spam.
   workflow_dispatch:
-  push:
-    branches:
-      - fix-ma3063-ethernet-luci
-    paths:
-      - 'target/linux/qualcommax/**'
-      - '.github/workflows/build-ma3063.yml'
 
 env:
   TZ: Asia/Jakarta

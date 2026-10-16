@@ -165,6 +165,8 @@
 &dp1 {
 	status = "okay";
 
+	label = "wan";
+
 	nvmem-cells = <&hw_mac_addr 0>;
 	nvmem-cell-names = "mac-address";
 };
@@ -244,12 +246,6 @@
 				reg = <3>;
 				label = "lan1";
 				phy-handle = <&qca8337_2>;
-			};
-
-			port@5 {
-				reg = <5>;
-				label = "wan";
-				phy-handle = <&qca8337_4>;
 			};
 
 			port@6 {

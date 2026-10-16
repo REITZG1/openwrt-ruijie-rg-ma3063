@@ -1,6 +1,6 @@
 --- a/drivers/net/wireless/ath/ath11k/reg.c
 +++ b/drivers/net/wireless/ath/ath11k/reg.c
-@@ -44,6 +44,50 @@
+@@ -44,6 +44,44 @@
  	return memcmp(regd->alpha2, alpha2, 2) != 0;
  }
  
@@ -9,21 +9,18 @@
 + * firmware). Force-enable the full 5 GHz band so channels
 + * 36-48/52-64/100-144/149-165 show up in iw/LuCI and can be used.
 + * Must run after every cfg80211 reg update because the core re-marks
-+ * channels from the narrow FW rules asynchronously (reg_work).
++ * channels from the narrow FW rules asynchronously (reg_work), and in
++ * the reg notifier before the state check (the 5G AP can never start
++ * otherwise, so state would never become ON).
 + */
-+static void ath11k_ma3063_force_5g_chans(struct ath11k *ar, const char *caller)
++static void ath11k_ma3063_force_5g_chans(struct ath11k *ar)
 +{
 +	struct ieee80211_supported_band *sband =
 +		ar->hw->wiphy->bands[NL80211_BAND_5GHZ];
-+	int i, forced = 0;
++	int i;
 +
-+	ath11k_warn(ar->ab, "ma3063 unlock called from %s state %d\n",
-+		    caller, ar->state);
-+	if (!sband) {
-+		ath11k_warn(ar->ab, "ma3063 unlock: no 5GHz band (pdev %d)\n",
-+			    ar->pdev_idx);
++	if (!sband)
 +		return;
-+	}
 +
 +	for (i = 0; i < sband->n_channels; i++) {
 +		struct ieee80211_channel *ch = &sband->channels[i];
@@ -42,34 +39,25 @@
 +			ch->max_power = 20;
 +		if (ch->max_reg_power < 10)
 +			ch->max_reg_power = 20;
-+		forced++;
 +	}
-+	ath11k_warn(ar->ab, "ma3063 unlock [%s]: forced %d 5GHz chans (pdev %d, n_ch %d)\n",
-+		    caller, forced, ar->pdev_idx, sband->n_channels);
 +}
 +
  static void
  ath11k_reg_notifier(struct wiphy *wiphy, struct regulatory_request *request)
  {
-@@ -58,6 +102,12 @@
+@@ -58,6 +96,7 @@
  	if (request->initiator == NL80211_REGDOM_SET_BY_DRIVER) {
  		ath11k_dbg(ar->ab, ATH11K_DBG_REG,
  			   "driver initiated regd update\n");
-+		/* re-force BEFORE the state check: the core has just
-+		 * re-applied the narrow FW rules; flags need no ON state.
-+		 * (Without this the 5G AP can never start, so state never
-+		 * becomes ON -> circle.)
-+		 */
-+		ath11k_ma3063_force_5g_chans(ar, "notifier");
++		ath11k_ma3063_force_5g_chans(ar);
  		if (ar->state != ATH11K_STATE_ON)
  			return;
  
-@@ -291,6 +341,9 @@
+@@ -291,6 +330,8 @@
  	if (ret)
  		goto err;
  
-+	/* force here too for paths that never reach the reg notifier */
-+	ath11k_ma3063_force_5g_chans(ar, "regd_update");
++	ath11k_ma3063_force_5g_chans(ar);
 +
  	return 0;
  err:

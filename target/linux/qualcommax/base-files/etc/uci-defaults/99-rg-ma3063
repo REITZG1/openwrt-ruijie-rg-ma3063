@@ -10,7 +10,7 @@
 wifi config 2>/dev/null
 for R in radio0 radio1; do
 	uci -q get wireless.$R >/dev/null || continue
-	uci set wireless.$R.country='ID'
+	uci -q delete wireless.$R.country
 	case "$(uci -q get wireless.$R.band)" in
 		2g)	uci set wireless.$R.channel='6'
 			uci set wireless.$R.htmode='HE20' ;;
