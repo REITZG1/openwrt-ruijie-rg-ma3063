@@ -252,6 +252,14 @@
 				phy-handle = <&qca8337_3>;
 			};
 
+			/* TEST: candidate real WAN jack (switch port 5).
+			 * Remove after mapping is confirmed. */
+			port@5 {
+				reg = <5>;
+				label = "wanb";
+				phy-handle = <&qca8337_4>;
+			};
+
 			port@6 {
 				reg = <6>;
 				phy-mode = "sgmii";
