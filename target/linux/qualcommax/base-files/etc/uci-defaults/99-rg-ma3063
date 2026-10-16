@@ -3,10 +3,22 @@
 # Runs on all qualcommax boards but only acts on ruijie,rg-ma3063.
 [ "$(board_name)" = "ruijie,rg-ma3063" ] || exit 0
 
-# 1. WiFi enabled by default (fresh installs ship with radios disabled).
+# 1. WiFi enabled by default with explicit SAFE settings
+# (fresh installs ship with radios disabled; relying on bare
+# 'wifi config' defaults once left a DFS/160MHz combo that hung
+# the QCN6122 on reload, so pin conservative values here).
 wifi config 2>/dev/null
-uci -q delete wireless.radio0.disabled
-uci -q delete wireless.radio1.disabled
+for R in radio0 radio1; do
+	uci -q get wireless.$R >/dev/null || continue
+	uci set wireless.$R.country='ID'
+	case "$(uci -q get wireless.$R.band)" in
+		2g)	uci set wireless.$R.channel='6'
+			uci set wireless.$R.htmode='HE20' ;;
+		5g)	uci set wireless.$R.channel='36'
+			uci set wireless.$R.htmode='HE80' ;;
+	esac
+	uci -q delete wireless.$R.disabled
+done
 uci -q delete wireless.default_radio0.disabled
 uci -q delete wireless.default_radio1.disabled
 uci commit wireless
@@ -24,5 +36,3 @@ for F in $(find /usr/share/ucode/luci/template /www -name 'footer.ut' 2>/dev/nul
 done
 
 exit 0
-
-# r2 rebuild trigger
